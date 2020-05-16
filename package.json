@@ -1,0 +1,22 @@
+{
+  "name": "librasmemory",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bhryanh/LibrasMemory.git"
+  },
+  "author": "Bhryan Henderson",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bhryanh/LibrasMemory/issues"
+  },
+  "homepage": "https://github.com/bhryanh/LibrasMemory#readme",
+  "dependencies": {
+    "electron": "^8.3.0"
+  }
+}
