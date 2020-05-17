@@ -2,8 +2,74 @@
 <html lang="en">
 <head>
     <title>Libras Memory</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="libs/materialdesign/css/materialize.min.css"  media="screen,projection"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 </head>
 <body>
-    <h1>Libras Memory</h1>
+    <nav>
+        <div class="nav-wrapper">
+            <a class="brand-logo center">Libras Memory</a>
+        </div>
+    </nav>
+    <video control autoplay>
+        <source src="" type="video/mp4">
+    </video>
+    <ul></ul>
+
+    <script>
+        const electron = require('electron');
+        const {ipcRenderer} = electron;
+        var fs = require('fs');
+        const ul = document.querySelector('ul');
+
+        fs.readFile('user.json', 'utf8', function readFileCallback(err, data){
+            elements = JSON.parse(data);
+            elements.user.forEach(element => {
+                ul.className = 'collection';
+                const li = document.createElement('li');
+                li.className = 'collection-item';
+                const btn = document.createElement('button');
+                btn.className = 'btn waves-effect green darken-1';
+                btn.appendChild(document.createTextNode('Play'));
+                const videoUrl = element.videoUrl;
+                const video = document.querySelector('video'); 
+                li.appendChild(btn);
+                ul.appendChild(li);
+                btn.addEventListener('click', playVideo);
+                function playVideo(e)
+                {
+                    video.src = "";
+                }
+            });
+        });
+
+        
+        ipcRenderer.on('item:add', function(e, item){
+            ul.className = 'collection';
+            const li = document.createElement('li');
+            li.className = 'collection-item';
+            const itemText = document.createTextNode(item);
+            li.appendChild(itemText);
+            ul.appendChild(li);
+        });
+
+        ipcRenderer.on('item:clear', function(){
+            ul.innerHTML = '';
+            ul.className = '';
+        });
+
+        ul.addEventListener('dblclick', removeItem);
+        function removeItem(e)
+        {
+            e.target.remove();
+            if(ul.children.length == 0){
+                ul.className = '';
+            }
+        }
+        
+
+    </script>
+    <script type="text/javascript" src="libs/materialdesign/js/materialize.min.js"></script>
 </body>
 </html>

@@ -1,0 +1,47 @@
+body {
+    background: #b3e5fc;
+}
+#vid2
+{
+    display: none;
+}
+
+.videos
+{
+    padding: 20px 25px 0px 25px;
+}
+.buttons
+{
+    padding: 5px 30px 0px 30px;
+    text-align: center;
+    display: inline-block;
+}
+#btnStop
+{
+    display: none;
+}
+#btnRecording
+{
+    display: none;
+}
+#btnRepeatRecord
+{
+    display: none;
+}
+#btnNextStep
+{
+    display: none;
+}
+#step-back
+{
+    display: none;
+}
+.title
+{
+    font-size: 30px;
+    color: black;
+}
+.container
+{
+    text-align: center;
+}

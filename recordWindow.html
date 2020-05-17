@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Record Video</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="libs/materialdesign/css/materialize.min.css"  media="screen,projection"/>
+    <link type="text/css" rel="stylesheet" href="recordWindow.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+</head>
+<body>
+    <div class="container">
+        <div id="step-video" class="videos">
+            <video class="responsive-video" id="vid"></video>
+            <video class="responsive-video" id="vid2" controls></video>
+            <div class="buttons">
+                <button class="btn waves-effect waves-light" id="btnStart">Start Record</button>
+                <button class="btn waves-effect red darken-1" id="btnRecording">Recording</button>
+                <button class="btn waves-effect waves-light" id="btnStop">Stop Record</button>
+                <button class="btn waves-effect waves-light" id="btnRepeatRecord">Record Again</button>
+                <button class="btn waves-effect waves-light" id="btnNextStep">Next Step</button>
+            </div>
+        </div>
+        <div id="step-back">
+            <label class="title">Enter the answer</label>
+            <input type="text" id="answer" autofocus>
+            <div class="buttons">
+                <button class="btn waves-effect waves-light" id="btnBack">Back</button>
+                <button class="btn waves-effect green darken-1" id="btnSave">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const electron = require('electron');
+        const {ipcRenderer} = electron;
+        const fs = require('fs');
+
+        let constraintObj = { 
+            audio: false, 
+            video: { 
+                facingMode: "user", 
+                width: { min: 320, ideal: 640, max: 1920 },
+                height: { min: 240, ideal: 720, max: 1080 } 
+            } 
+        }; 
+
+        //handle older browsers that might implement getUserMedia in some way
+        if (navigator.mediaDevices === undefined) {
+            navigator.mediaDevices = {};
+            navigator.mediaDevices.getUserMedia = function(constraintObj) {
+                let getUserMedia = navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+                if (!getUserMedia) {
+                    return Promise.reject(new Error('getUserMedia is not implemented in this browser'));
+                }
+                return new Promise(function(resolve, reject) {
+                    getUserMedia.call(navigator, constraintObj, resolve, reject);
+                });
+            }
+        }else{
+            navigator.mediaDevices.enumerateDevices()
+            .then(devices => {
+                devices.forEach(device=>{
+                    console.log(device.kind.toUpperCase(), device.label);
+                    //, device.deviceId
+                })
+            })
+            .catch(err=>{
+                console.log(err.name, err.message);
+            })
+        }
+
+        navigator.mediaDevices.getUserMedia(constraintObj)
+        .then(function(mediaStreamObj) {
+            //connect the media stream to the first video element
+            let video = document.querySelector('video');
+            if ("srcObject" in video) {
+                video.srcObject = mediaStreamObj;
+            } else {
+                //old version
+                video.src = window.URL.createObjectURL(mediaStreamObj);
+            }
+            
+            video.onloadedmetadata = function(ev) {
+                //show in the video element what is being captured by the webcam
+                video.play();
+            };
+            
+            //add listeners for saving video/audio
+            let start = document.getElementById('btnStart');
+            let stop = document.getElementById('btnStop');
+            let recording = document.getElementById('btnRecording');
+            let repeat = document.getElementById('btnRepeatRecord');
+            let next = document.getElementById('btnNextStep');
+            let save = document.getElementById('btnSave');
+            let backBtn = document.getElementById('btnBack');
+            let stepBack = document.getElementById('step-back');
+            let stepVideo = document.getElementById('step-video');
+            let vidRec = document.getElementById('vid');
+            let vidSave = document.getElementById('vid2');
+            let mediaRecorder = new MediaRecorder(mediaStreamObj);
+            let blob_reader = new FileReader();
+            let path = "./videos/" + makeid(10);
+            let toSave = [];
+            let chunks = [];
+            
+            start.addEventListener('click', (ev)=>{
+                mediaRecorder.start();
+                console.log(mediaRecorder.state);
+                stop.style.display = 'inline-block';
+                recording.style.display = 'inline-block';
+                start.style.display = 'none';
+            });
+            repeat.addEventListener('click', (ev)=>{
+                mediaRecorder.start();
+                console.log(mediaRecorder.state);
+                vidSave.style.display = 'none';
+                vidRec.style.display = 'block';
+                stop.style.display = 'inline-block';
+                recording.style.display = 'inline-block';
+                repeat.style.display = 'none';
+                next.style.display = 'none';
+            });
+            stop.addEventListener('click', (ev)=>{
+                mediaRecorder.stop();
+                console.log(mediaRecorder.state);
+                vidSave.style.display = 'block';
+                vidRec.style.display = 'none';
+                stop.style.display = 'none';
+                recording.style.display = 'none';
+                repeat.style.display = 'inline-block';
+                next.style.display = 'inline-block';
+            });
+            next.addEventListener('click', (ev)=>{
+                stepVideo.style.display = 'none';
+                stepBack.style.display = 'block';
+            });
+            backBtn.addEventListener('click', (ev)=>{
+                stepVideo.style.display = 'block';
+                stepBack.style.display = 'none';
+            });
+            save.addEventListener('click', (ev)=>{         
+                const card = 
+                {
+                    'answer': document.querySelector('#answer').value,
+                    'videoFile': path
+                }
+                ipcRenderer.send('card:add', card);
+            });
+
+            blob_reader.addEventListener("load", function(ev) {
+                if(toSave.length) {
+                    let storage_stream = require("fs").createWriteStream(path);
+                    storage_stream.write(Buffer.from(ev.currentTarget.result));
+                    ev.currentTarget.readAsArrayBuffer(toSave.shift());
+                }
+            });
+
+            mediaRecorder.ondataavailable = function(ev) {
+                if(blob_reader.readyState != 1) 
+                {
+                    blob_reader.readAsArrayBuffer(ev.data);
+                    chunks.push(ev.data);
+                }
+            }
+            mediaRecorder.onstop = (ev)=>{
+                let blob = new Blob(chunks, { 'type' : 'video/mp4;' });
+                let videoURL = window.URL.createObjectURL(blob);
+                vidSave.src = videoURL;
+                toSave = chunks;
+                chunks = [];
+            }
+        })
+        .catch(function(err) { 
+            debugger;
+            console.log(err.name, err.message); 
+        });
+
+        function makeid(length) {
+            var result           = '';
+            var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            var charactersLength = characters.length;
+            for ( var i = 0; i < length; i++ ) {
+                result += characters.charAt(Math.floor(Math.random() * charactersLength));
+            }
+            return result + ".mp4";
+        }
+    </script>
+
+    <script type="text/javascript" src="libs/materialdesign/js/materialize.min.js"></script>
+</body>
+</html>
