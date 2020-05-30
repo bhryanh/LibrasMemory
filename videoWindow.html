@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Play Video</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="libs/materialdesign/css/materialize.min.css"  media="screen,projection"/>
+    <link type="text/css" rel="stylesheet" href="videoWindow.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+</head>
+<body>
+    <div class="container">
+        <div id="video" class="videos">
+            <video class="responsive-video" id="vid" controls>
+                <source src="" type="video/mp4">
+            </video>
+        </div>
+        <div id="answer" class="answer"></div>
+        <div class="buttons">
+            <button class="btn waves-effect waves-light" id="btnShowAnswer">Resposta</button>
+            <button class="btn waves-effect red darken-1" id="btnClose">Fechar</button>
+        </div>
+    </div>
+    <script>
+        const electron = require('electron');
+        const {ipcRenderer} = electron;
+        const fs = require('fs');
+
+        let vid = document.getElementById('vid');
+        let btnAnswer = document.getElementById('btnShowAnswer');
+        let btnClose = document.getElementById('btnClose');
+        let answer = document.getElementById('answer');
+        var element = {};
+
+        btnAnswer.addEventListener('click', (ev)=>{
+            showAnswer(element);
+        });
+
+        btnClose.addEventListener('click', (ev)=>{
+            ipcRenderer.send('video:close', null);
+        });
+
+        ipcRenderer.on('video:info', function(e, item){
+            element = item;
+            playVideo(item);
+        });
+
+        function playVideo(item) 
+        {
+            vid.src = item.videoFile.substring(2);
+            vid.play();
+        }
+
+        function showAnswer(item)
+        {
+            answer.textContent = item.answer;
+            answer.style.display = 'block';
+            btnAnswer.style.display = 'none';
+            btnClose.style.display = 'block';
+            vid.style.width = '400px';
+        }
+
+        ipcRenderer.send('video:get', null);
+    </script>
+</body>

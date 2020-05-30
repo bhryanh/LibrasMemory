@@ -13,19 +13,21 @@
             <video class="responsive-video" id="vid"></video>
             <video class="responsive-video" id="vid2" controls></video>
             <div class="buttons">
-                <button class="btn waves-effect waves-light" id="btnStart">Start Record</button>
-                <button class="btn waves-effect red darken-1" id="btnRecording">Recording</button>
-                <button class="btn waves-effect waves-light" id="btnStop">Stop Record</button>
-                <button class="btn waves-effect waves-light" id="btnRepeatRecord">Record Again</button>
-                <button class="btn waves-effect waves-light" id="btnNextStep">Next Step</button>
+                <button class="btn waves-effect green darken-1" id="btnStart">Iniciar Gravação</button>
+                <button class="btn waves-effect red darken-1" id="btnRecording">Gravando...</button>
+                <button class="btn waves-effect waves-light" id="btnStop">Parar de Gravar</button>
+                <button class="btn waves-effect lime darken-3" id="btnRepeatRecord">Gravar Novamente</button>
+                <button class="btn waves-effect green darken-1" id="btnNextStep">Próximo Passo</button>
             </div>
         </div>
         <div id="step-back">
-            <label class="title">Enter the answer</label>
+            <label class="title">Coloque um identificador</label>
+            <input type="text" id="label" autofocus>
+            <label class="title">Coloque a Resposta</label>
             <input type="text" id="answer" autofocus>
             <div class="buttons">
-                <button class="btn waves-effect waves-light" id="btnBack">Back</button>
-                <button class="btn waves-effect green darken-1" id="btnSave">Save</button>
+                <button class="btn waves-effect lime darken-3" id="btnBack">Voltar para Vídeo</button>
+                <button class="btn waves-effect green darken-1" id="btnSave">Salvar</button>
             </div>
         </div>
     </div>
@@ -34,13 +36,15 @@
         const electron = require('electron');
         const {ipcRenderer} = electron;
         const fs = require('fs');
+        let start = document.getElementById('btnStart');
 
         let constraintObj = { 
             audio: false, 
             video: { 
                 facingMode: "user", 
                 width: { min: 320, ideal: 640, max: 1920 },
-                height: { min: 240, ideal: 720, max: 1080 } 
+                height: { min: 240, ideal: 720, max: 1080 },
+                flip: true
             } 
         }; 
 
@@ -83,10 +87,10 @@
             video.onloadedmetadata = function(ev) {
                 //show in the video element what is being captured by the webcam
                 video.play();
+                start.style.display = 'inline-block';
             };
             
             //add listeners for saving video/audio
-            let start = document.getElementById('btnStart');
             let stop = document.getElementById('btnStop');
             let recording = document.getElementById('btnRecording');
             let repeat = document.getElementById('btnRepeatRecord');
@@ -141,6 +145,7 @@
             save.addEventListener('click', (ev)=>{         
                 const card = 
                 {
+                    'label': document.querySelector('#label').value,
                     'answer': document.querySelector('#answer').value,
                     'videoFile': path
                 }
@@ -163,6 +168,7 @@
                 }
             }
             mediaRecorder.onstop = (ev)=>{
+                debugger;
                 let blob = new Blob(chunks, { 'type' : 'video/mp4;' });
                 let videoURL = window.URL.createObjectURL(blob);
                 vidSave.src = videoURL;
@@ -171,7 +177,6 @@
             }
         })
         .catch(function(err) { 
-            debugger;
             console.log(err.name, err.message); 
         });
 
@@ -184,6 +189,7 @@
             }
             return result + ".mp4";
         }
+
     </script>
 
     <script type="text/javascript" src="libs/materialdesign/js/materialize.min.js"></script>

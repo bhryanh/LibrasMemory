@@ -10,8 +10,10 @@ process.env.NODE_ENV = 'dev';
 app.setPath("userData", __dirname + "/saved_recordings")
 
 let mainWindow;
-let addWindow;
 let recordWindow;
+let videoWindow;
+
+let videoToPlay = {};
 
 //Listen for app to be ready
 app.on('ready', function(){
@@ -36,26 +38,6 @@ app.on('ready', function(){
     Menu.setApplicationMenu(mainMenu);
 });
 
-function createAddWindow(){
-    addWindow = new BrowserWindow({
-        width: 300,
-        height: 200,
-        title: 'Add Video',
-        webPreferences: {
-            nodeIntegration: true
-        }
-    });
-    addWindow.loadURL(url.format({
-        pathname: path.join(__dirname, 'addWindow.html'),
-        protocol: 'file:',
-        slashes: true
-    }));
-
-    addWindow.on('close', function(){
-        addWindow = null;
-    });
-};
-
 function createRecordWindow(){
     recordWindow = new BrowserWindow({
         width: 800,
@@ -76,42 +58,60 @@ function createRecordWindow(){
     });
 };
 
-// Catch item:add
-ipcMain.on('item:add', function (e, item){
-    mainWindow.webContents.send('item:add', item);
-    addWindow.close();
-});
+function createVideoWindow(item){
+    videoWindow = new BrowserWindow({
+        width: 800,
+        height: 600,
+        title: 'Play Video',
+        webPreferences: {
+            nodeIntegration: true
+        }
+    });
+    videoWindow.loadURL(url.format({
+        pathname: path.join(__dirname, 'videoWindow.html'),
+        protocol: 'file:',
+        slashes: true
+    }));
 
-// Catch card:add
+    videoWindow.on('close', function(){
+        videoWindow = null;
+    });
+};
+
 ipcMain.on('card:add', function (e, item){
     saveCard(item);
     mainWindow.webContents.send('card:add', item);
     recordWindow.close();
 });
 
+ipcMain.on('card:remove', function (e, item){
+    removeCard(item);
+});
+
+ipcMain.on('video:play', function (e, item){
+    createVideoWindow();
+    videoToPlay = item;
+});
+
+ipcMain.on('video:get', function (e, item){
+    e.sender.send('video:info', videoToPlay);
+});
+
+ipcMain.on('video:create', function (e, item){
+    createRecordWindow();
+});
+
+ipcMain.on('video:close', function (e, item){
+    videoWindow.close();
+});
+
+
+
 //Create menu template
 const mainMenuTemplate = [
     {
         label: 'File',
         submenu:[
-            {
-                label:"Record Video",
-                click(){
-                    createRecordWindow();
-                }
-            },
-            {
-                label: "Add Video",
-                click(){
-                    createAddWindow();
-                }
-            },
-            {
-                label: "Clear Video",
-                click(){
-                    mainWindow.webContents.send('item:clear');
-                }
-            },
             {
                 label: "Quit",
                 accelerator: process.platform == 'darwin' ? 'Command+Q' : 'Ctrl+Q',
@@ -152,10 +152,15 @@ if(process.env.NODE_ENV !== 'production')
 function saveCard(card)
 {
     fs.readFile('user.json', 'utf8', function readFileCallback(err, data){
-        if (data === undefined){
-            var obj = {
-                user: []
+        if (data === undefined)
+        {
+            var obj = 
+            {
+                user: [],
+                countId: 1
             };
+            card.id = obj.countId;
+            obj.countId++;
             obj.user.push(card);
             var json = JSON.stringify(obj);
             var fs = require('fs');
@@ -163,10 +168,36 @@ function saveCard(card)
         } 
         else {
             obj = JSON.parse(data); //now it an object
+            card.id = obj.countId;
+            obj.countId++;
             obj.user.push(card); //add some data
             json = JSON.stringify(obj); //convert it back to json
             var fs = require('fs');
             fs.writeFile('user.json', json, 'utf8', function writeFileCallback(err, data){if (err){console.log(err);}}); // write it back 
         }});
+};
+
+function removeCard(card)
+{
+    fs.readFile('user.json', 'utf8', function readFileCallback(err, data)
+    {
+        let obj = JSON.parse(data);
+        let idx = obj.user.findIndex(x => x.id == card.id);
+        obj.user.splice(idx, 1);
+        let json = JSON.stringify(obj); 
+        var fs = require('fs');
+        fs.writeFile('user.json', json, 'utf8', function writeFileCallback(err, data){if (err){console.log(err);}}); // write it back 
+    });
+    removeVideo(card);
+};
+
+function removeVideo(card)
+{
+    fs.unlink(card.videoFile, (err) => {
+        if (err) {
+          console.error(err)
+          return
+        }
+    });
 };
 

@@ -1,5 +1,5 @@
 body {
-    background: #b3e5fc;
+    background: #90caf9;
 }
 #vid2
 {
@@ -17,6 +17,10 @@ body {
     display: inline-block;
 }
 #btnStop
+{
+    display: none;
+}
+#btnStart
 {
     display: none;
 }

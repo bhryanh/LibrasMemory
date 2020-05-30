@@ -5,68 +5,123 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link type="text/css" rel="stylesheet" href="libs/materialdesign/css/materialize.min.css"  media="screen,projection"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link type="text/css" rel="stylesheet" href="mainWindow.css" />
 </head>
 <body>
-    <nav>
+    <nav class="blue lighten-3">
         <div class="nav-wrapper">
-            <a class="brand-logo center">Libras Memory</a>
+            <a class="brand-logo left">Libras Memory</a>
+            <ul class="right">
+                <a id="btnEdit" class="waves-effect deep-orange darken-1 btn"><i class="material-icons left">edit</i>Modo Edição</a>
+                <a id="btnCreate" class="waves-effect blue darken-1 btn"><i class="material-icons left">add</i>Criar um vídeo</a>
+            </ul>
         </div>
     </nav>
-    <video control autoplay>
-        <source src="" type="video/mp4">
-    </video>
-    <ul></ul>
+    <div class="errors">
+        <span class="error" id="error-nothing">Para começar clique em <span style="color:#1e88e5">Criar um Vídeo</span></span>
+        <span class="error" id="error error-editMode">Para voltar para o modo de exibição clique no botão <span style="color:#f4511e">Modo Edição</span> novamente</span>
+    </div>
+    <ul id="list"></ul>
 
     <script>
         const electron = require('electron');
         const {ipcRenderer} = electron;
         var fs = require('fs');
-        const ul = document.querySelector('ul');
+        const ul = document.getElementById('list');
+        const create = document.getElementById('btnCreate');
+        const edit = document.getElementById('btnEdit');
+        var errors = document.getElementsByClassName("error");
+        create.addEventListener('click', createVideo);
+        edit.addEventListener('click', editMode);
+        var rowElements = {};
 
         fs.readFile('user.json', 'utf8', function readFileCallback(err, data){
+            ul.className = 'collection';
             elements = JSON.parse(data);
-            elements.user.forEach(element => {
-                ul.className = 'collection';
-                const li = document.createElement('li');
-                li.className = 'collection-item';
-                const btn = document.createElement('button');
-                btn.className = 'btn waves-effect green darken-1';
-                btn.appendChild(document.createTextNode('Play'));
-                const videoUrl = element.videoUrl;
-                const video = document.querySelector('video'); 
-                li.appendChild(btn);
-                ul.appendChild(li);
-                btn.addEventListener('click', playVideo);
-                function playVideo(e)
-                {
-                    video.src = "";
-                }
-            });
+            rowElements = elements;
+            if(elements.user.length > 0)
+            {
+                elements.user.forEach(element => addRow(element));
+                errors[0].style.display = 'none';
+                errors[1].style.display = 'none';
+            }
+            else
+            {
+                errors[1].style.display = 'none';
+            }
         });
 
-        
-        ipcRenderer.on('item:add', function(e, item){
-            ul.className = 'collection';
+        function editMode()
+        {
+            var removeButtons = document.getElementsByClassName("btnRemoveVideo");
+            var playButtons = document.getElementsByClassName("btnPlayVideo");
+            for (i = 0; i < removeButtons.length; i++) {
+                if (removeButtons[i].style.display == "none" || removeButtons[i].style.display == "") {
+                    removeButtons[i].style.display = 'inline-block';
+                    playButtons[i].style.display = 'none';
+                    errors[1].style.display = 'block';
+                } else {
+                    removeButtons[i].style.display = "none";
+                    playButtons[i].style.display = 'inline-block';
+                    errors[1].style.display = 'none';
+                }
+            }
+        }
+
+        function createVideo()
+        {
+            ipcRenderer.send('video:create', null);
+        }
+
+        function playVideo(element)
+        {
+            ipcRenderer.send('video:play', element);
+        }
+
+        function removeVideo(element)
+        {
+            ipcRenderer.send('card:remove', element);
+            removeRow(window.event);
+        }
+
+        function addRow(element)
+        {
             const li = document.createElement('li');
             li.className = 'collection-item';
-            const itemText = document.createTextNode(item);
-            li.appendChild(itemText);
+            const text = document.createElement('div');
+            text.textContent = element['label'];
+            text.className = 'rowElements txtDescriptionVideo';
+            //btn play
+            const btnPlay = document.createElement('button');
+            btnPlay.className = 'rowElements btnPlayVideo btn waves-effect green darken-1';
+            btnPlay.appendChild(document.createTextNode('Ver Vídeo'));
+            btnPlay.addEventListener('click', function(){playVideo(element)});
+            li.appendChild(btnPlay);
+            //btn remove
+            const btnRemove = document.createElement('button');
+            btnRemove.className = 'rowElements btnRemoveVideo btn waves-effect red darken-4';
+            btnRemove.appendChild(document.createTextNode('Remover'));
+            btnRemove.addEventListener('click', function(){removeVideo(element)});
+            li.appendChild(btnRemove);
+
+            const videoUrl = element.videoUrl;
+            const video = document.querySelector('video');
+            li.appendChild(text); 
             ul.appendChild(li);
-        });
+        }
 
-        ipcRenderer.on('item:clear', function(){
-            ul.innerHTML = '';
-            ul.className = '';
-        });
-
-        ul.addEventListener('dblclick', removeItem);
-        function removeItem(e)
+        function removeRow(e)
         {
-            e.target.remove();
+            e.target.parentNode.remove();
             if(ul.children.length == 0){
                 ul.className = '';
             }
+
         }
+        
+        ipcRenderer.on('card:add', function(e, item){
+            addRow(item);
+        });
         
 
     </script>

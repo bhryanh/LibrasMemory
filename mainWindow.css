@@ -1,0 +1,21 @@
+.rowElements{
+    display: inline-block
+}
+.txtDescriptionVideo {
+    margin: 10px;
+}
+.btnPlayVideo {
+    float: right;
+}
+
+.btnRemoveVideo {
+    float: right;
+    margin-right: 5px;
+    display: none;
+}
+
+.errors {
+    font-size: 20px;
+    padding: 10px;
+    text-align: center;
+}
