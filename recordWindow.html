@@ -20,14 +20,18 @@
                 <button class="btn waves-effect green darken-1" id="btnNextStep">Próximo Passo</button>
             </div>
         </div>
-        <div id="step-back">
-            <label class="title">Coloque um identificador</label>
-            <input type="text" id="label" autofocus>
-            <label class="title">Coloque a Resposta</label>
-            <input type="text" id="answer" autofocus>
+        <div id="final-step">
+            <div class="answer-input">
+                <label class="title">Coloque um identificador</label>
+                <input type="text" id="label" autofocus>
+            </div>
+            <div class="answer-input">
+                <label class="title">Coloque a Resposta</label>
+                <input type="text" id="answer" autofocus>
+            </div>
             <div class="buttons">
-                <button class="btn waves-effect lime darken-3" id="btnBack">Voltar para Vídeo</button>
-                <button class="btn waves-effect green darken-1" id="btnSave">Salvar</button>
+                <button class="btn waves-effect lime darken-3" id="btnBack">Voltar</button>
+                <button class="btn waves-effect green darken-1" id="btnSave">Salvar Vídeo</button>
             </div>
         </div>
     </div>
@@ -44,7 +48,6 @@
                 facingMode: "user", 
                 width: { min: 320, ideal: 640, max: 1920 },
                 height: { min: 240, ideal: 720, max: 1080 },
-                flip: true
             } 
         }; 
 
@@ -76,6 +79,7 @@
         navigator.mediaDevices.getUserMedia(constraintObj)
         .then(function(mediaStreamObj) {
             //connect the media stream to the first video element
+            debugger;
             let video = document.querySelector('video');
             if ("srcObject" in video) {
                 video.srcObject = mediaStreamObj;
@@ -97,13 +101,15 @@
             let next = document.getElementById('btnNextStep');
             let save = document.getElementById('btnSave');
             let backBtn = document.getElementById('btnBack');
-            let stepBack = document.getElementById('step-back');
+            let finalStep = document.getElementById('final-step');
             let stepVideo = document.getElementById('step-video');
             let vidRec = document.getElementById('vid');
             let vidSave = document.getElementById('vid2');
             let mediaRecorder = new MediaRecorder(mediaStreamObj);
             let blob_reader = new FileReader();
-            let path = "./videos/" + makeid(10);
+            var basePath = process.env.USERPROFILE+'\\Documents\\LibrasMemory';
+            var videoPath = basePath + '\\videos\\'
+            let path = videoPath + makeid(10);
             let toSave = [];
             let chunks = [];
             
@@ -136,11 +142,11 @@
             });
             next.addEventListener('click', (ev)=>{
                 stepVideo.style.display = 'none';
-                stepBack.style.display = 'block';
+                finalStep.style.display = 'block';
             });
             backBtn.addEventListener('click', (ev)=>{
                 stepVideo.style.display = 'block';
-                stepBack.style.display = 'none';
+                finalStep.style.display = 'none';
             });
             save.addEventListener('click', (ev)=>{         
                 const card = 

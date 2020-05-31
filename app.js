@@ -5,9 +5,12 @@ var fs = require('fs');
 
 const {app, BrowserWindow, Menu, ipcMain} = electron;
 
-//SET ENV
 process.env.NODE_ENV = 'dev';
 app.setPath("userData", __dirname + "/saved_recordings")
+var basePath = process.env.USERPROFILE+'\\Documents\\LibrasMemory';
+var videoPath = basePath + '\\videos\\'
+fs.mkdir(videoPath, { recursive: true }, (err) => {if (err) throw err;});
+var userConfPath = basePath + '\\user.json';
 
 let mainWindow;
 let recordWindow;
@@ -151,7 +154,7 @@ if(process.env.NODE_ENV !== 'production')
 
 function saveCard(card)
 {
-    fs.readFile('user.json', 'utf8', function readFileCallback(err, data){
+    fs.readFile(userConfPath, 'utf8', function readFileCallback(err, data){
         if (data === undefined)
         {
             var obj = 
@@ -164,7 +167,7 @@ function saveCard(card)
             obj.user.push(card);
             var json = JSON.stringify(obj);
             var fs = require('fs');
-            fs.writeFile('user.json', json, 'utf8', function writeFileCallback(err, data){if (err){console.log(err);}});
+            fs.writeFile(userConfPath, json, 'utf8', function writeFileCallback(err, data){if (err){console.log(err);}});
         } 
         else {
             obj = JSON.parse(data); //now it an object
@@ -173,20 +176,20 @@ function saveCard(card)
             obj.user.push(card); //add some data
             json = JSON.stringify(obj); //convert it back to json
             var fs = require('fs');
-            fs.writeFile('user.json', json, 'utf8', function writeFileCallback(err, data){if (err){console.log(err);}}); // write it back 
+            fs.writeFile(userConfPath, json, 'utf8', function writeFileCallback(err, data){if (err){console.log(err);}}); // write it back 
         }});
 };
 
 function removeCard(card)
 {
-    fs.readFile('user.json', 'utf8', function readFileCallback(err, data)
+    fs.readFile(userConfPath, 'utf8', function readFileCallback(err, data)
     {
         let obj = JSON.parse(data);
         let idx = obj.user.findIndex(x => x.id == card.id);
         obj.user.splice(idx, 1);
         let json = JSON.stringify(obj); 
         var fs = require('fs');
-        fs.writeFile('user.json', json, 'utf8', function writeFileCallback(err, data){if (err){console.log(err);}}); // write it back 
+        fs.writeFile(userConfPath, json, 'utf8', function writeFileCallback(err, data){if (err){console.log(err);}}); // write it back 
     });
     removeVideo(card);
 };

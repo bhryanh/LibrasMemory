@@ -37,17 +37,26 @@
 
         fs.readFile('user.json', 'utf8', function readFileCallback(err, data){
             ul.className = 'collection';
-            elements = JSON.parse(data);
-            rowElements = elements;
-            if(elements.user.length > 0)
+            if(data)
             {
-                elements.user.forEach(element => addRow(element));
-                errors[0].style.display = 'none';
-                errors[1].style.display = 'none';
+                elements = JSON.parse(data);
+                rowElements = elements;
+                if(elements.user.length > 0)
+                {
+                    elements.user.forEach(element => addRow(element));
+                    errors[0].style.display = 'none';
+                    errors[1].style.display = 'none';
+                }
+                else
+                {
+                    errors[1].style.display = 'none';
+                    edit.style.display = 'none';
+                }
             }
             else
             {
                 errors[1].style.display = 'none';
+                edit.style.display = 'none';
             }
         });
 
@@ -110,6 +119,7 @@
             ul.appendChild(li);
             errors[0].style.display = 'none';
             errors[1].style.display = 'none';
+            edit.style.display = 'inline-block';
         }
 
         function removeRow(e)
@@ -117,6 +127,8 @@
             e.target.parentNode.remove();
             if(ul.children.length == 0){
                 ul.className = '';
+                errors[1].style.display = 'none';
+                edit.style.display = 'none';
             }
 
         }

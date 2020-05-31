@@ -107,3 +107,4 @@ saved_recordings/
 
 videos/*
 !videos/.empty
+release-builds/*

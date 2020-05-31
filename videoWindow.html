@@ -46,7 +46,7 @@
 
         function playVideo(item) 
         {
-            vid.src = item.videoFile.substring(2);
+            vid.src = item.videoFile;
             vid.play();
         }
 
@@ -56,7 +56,7 @@
             answer.style.display = 'block';
             btnAnswer.style.display = 'none';
             btnClose.style.display = 'block';
-            vid.style.width = '400px';
+            vid.style.width = '450px';
         }
 
         ipcRenderer.send('video:get', null);

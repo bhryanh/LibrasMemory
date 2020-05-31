@@ -36,9 +36,9 @@ body {
 {
     display: none;
 }
-#step-back
-{
+#final-step{
     display: none;
+    padding-top: 50px;
 }
 .title
 {
@@ -48,4 +48,9 @@ body {
 .container
 {
     text-align: center;
+}
+.answer-input
+{
+    padding-top:25px;
+    padding-bottom: 25px;
 }
