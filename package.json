@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/bhryanh/LibrasMemory#readme",
   "dependencies": {
-    "electron": "^8.3.0",
+    "electron": "^11.5.0",
     "electron-save-file": "^1.0.2",
     "file-saver": "^2.0.2"
   },
